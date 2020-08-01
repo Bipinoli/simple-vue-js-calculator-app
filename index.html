@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculator</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet"> 
+
     <style>
+
+        body {
+            background-color: #dedede;
+        }
 
         #calculator {
             width: min-content;
+            margin-top: 50px;
             background-image: url("img/bg.png");
             background-size: cover;
             box-shadow: 0px 0px 3px #aaaaaa;
@@ -19,6 +27,10 @@
             background-image: url("img/ans.png");
             background-size: cover;
             margin-left: 20px;
+            text-align: center;
+            font-family: 'Indie Flower', cursive;
+            font-size: 4rem;
+            box-shadow: 0px 2px 6px #838383;
         }
 
         .content {
@@ -48,12 +60,25 @@
             box-shadow: 0px 0px 3px #cacaca;
         }
 
+        .button:hover {
+            box-shadow: 0px 0px 10px #3a3a3a;
+        }
+
+        .button:active {
+            box-shadow: 0px 0px 5px #3a3a3a;
+            transform: translateY(4px);
+        }
+
+        .clear, .equals {
+            width: 230px;
+        }
+
 
     </style>
 
 
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script>
-
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2.6.11"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 
 </head>
 
@@ -61,11 +86,11 @@
     <center>
         <div id="calculator">
             <div class="content">
-                <div class="answer"></div>
+                <div class="answer">{{ans}}</div>
                 <div class="controls">
                     <div class="row" v-for="row in controls">
                         <template v-for="tg in row">
-                        <calc-btn :tag='tg'></calc-btn>
+                        <calc-btn :tag='tg' @btn-event="btnPressed"></calc-btn>
                         </template>
                     </div>
                 </div>
@@ -77,28 +102,79 @@
 
         Vue.component('calc-btn', {
             props: ['tag'],
-            template: "<div class='button'></div>",
+            template: "<div class='button' :class='`${tag}`' @click=\"signal\" :style=\"`background-image: url('img/${tag}.png')`\"></div>",
+            methods: {
+                signal() {
+                    this.$emit("btn-event", this.tag);
+                }
+            }
         });
 
         var calculator = new Vue({
             el: '#calculator',
             data: {
                 controls: [
-                    ['6', '7', '8', '9', 'divide'],
-                    ['3', '4', '5', 'minus', 'mult'],
-                    ['0', '1', '2', 'plus', 'equals']
-                ]
+                    ['7', '8', '9', 'clear'],
+                    ['4', '5', '6', 'minus', 'divide'],
+                    ['1', '2', '3', 'plus', 'mult'],
+                    ['0', 'decimal', 'plus-minus', 'equals']
+                ],
+                ans: 0,
+                prev: '1',
+                operator: 'mult',
+            },
+            methods: {
+                btnPressed(tag) {
+                    
+                    if (tag == 'decimal') {
+                        if (this.ans.indexOf('.') == -1)
+                            this.ans += '.';
+                        return;
+                    }
+
+                    if (tag == 'plus-minus') {
+                        if (this.ans[0] == '-')
+                            this.ans = this.ans.substring(1);
+                        else
+                            this.ans = '-' + this.ans;
+                        return;
+                    }
+
+                    let nums = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+                    if (nums.indexOf(tag) == -1) {
+                        if (tag == 'equals') {
+                            switch (this.operator) {
+                                case 'mult':
+                                    this.ans = '' + (parseFloat(this.prev) * parseFloat(this.ans));
+                                    resetPrev();
+                                case 'divide':
+                                    this.ans = '' + (parseFloat(this.prev) / parseFloat(this.ans));
+                                    resetPrev();
+                                case 'plus':
+                                    this.ans = '' + (parseFloat(this.prev) + parseFloat(this.ans));
+                                    resetPrev();
+                                case 'minus':
+                                    this.ans = '' + (parseFloat(this.prev) - parseFloat(this.ans));
+                                    resetPrev();
+                            }
+                        } else {
+                            this.prev = this.ans;
+                            this.operator = tag;
+                            this.ans = '0';
+                        }
+                            
+                    } else {
+                        this.ans = `${this.ans}${tag}`;
+                    }                 
+                },
+
+                resetPrev() {
+                    this.prev = '1';
+                    this.operator = 'mult';
+                }
             }
         });
 
-        (function setup() {
-            let btns = document.getElementsByClassName("button");
-            for (let i=0; i<btns.length; i++) {
-                let tag = btns[i].__vue__._props.tag;
-                btns[i].style.backgroundImage = `url("img/${tag}.png"`;
-
-            }
-        })();
 
     </script>
 
